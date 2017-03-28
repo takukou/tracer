@@ -38,9 +38,9 @@ vec3f RayTracer::traceRay( Scene *scene, const ray& r,
 		// Instead of just returning the result of shade(), add some
 		// more steps: add in the contributions from reflected and refracted
 		// rays.
-
 		const Material& m = i.getMaterial();
-		return m.shade(scene, r, i);
+		vec3f I = vec3f(0.0, 0.0, 0.0);
+		I += m.shade(scene, r, i);
 	
 	} else {
 		// No intersection.  This ray travels to infinity, so we color
