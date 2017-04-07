@@ -25,6 +25,11 @@ vec3f RayTracer::trace( Scene *scene, double x, double y )
 vec3f RayTracer::traceRay( Scene *scene, const ray& r, 
 	const vec3f& thresh, int depth )
 {
+
+	/*if (depth > traceUI->getDepth()) {
+		return vec3f(0.0, 0.0, 0.0);
+	}*/
+	
 	isect i;
 
 	if( scene->intersect( r, i ) ) {
@@ -40,8 +45,17 @@ vec3f RayTracer::traceRay( Scene *scene, const ray& r,
 		// rays.
 
 		const Material& m = i.getMaterial();
-		return m.shade(scene, r, i);
-	
+		vec3f N = i.N;
+		vec3f rayDirection = r.getDirection();
+		vec3f intensity(0.0, 0.0, 0.0);
+		intensity += m.shade(scene, r, i);
+		// reclection = (2*NL*N)-L
+		vec3f reflectDirection = (2 * N * (N.dot((-rayDirection)))) - (-rayDirection);
+		ray reflectionRay(r.at(i.t), reflectDirection);
+
+		intensity += prod(m.kr, traceRay(scene, reflectionRay, thresh, depth + 1));
+
+		return intensity;
 	} else {
 		// No intersection.  This ray travels to infinity, so we color
 		// it according to the background color, which in this (simple) case
