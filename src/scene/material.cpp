@@ -26,16 +26,14 @@ vec3f Material::shade( Scene *scene, const ray& r, const isect& i ) const
 
 	for (Scene::cliter j = scene->beginLights(); j != scene->endLights(); j++) {
 		
-
+		vec3f dir = (*j)->getDirection(P).normalize();
 		vec3f light = (*j)->getColor(P);
-		/*vec3f diffuse = prod(light, kd);
-		diffuse *= maximum(N.dot((*j)->getDirection(P)),0.0);*/
-		vec3f diffuse = kd * maximum(N.dot((*j)->getDirection(P)), 0.0);
+		vec3f diffuse = kd * maximum(N.dot(dir), 0.0);
 		
-		double atten = (*j)->distanceAttenuation(P);
-		vec3f R = 2 * ((*j)->getDirection(P).dot(N)) * N - (*j)->getDirection(P);
-		vec3f spec = ks * pow(maximum(R*(*j)->getDirection(P), 0.0), shininess*128.0);
-		shade += prod(atten*light, diffuse + spec);
+		vec3f atten = (*j)->distanceAttenuation(P) * (*j)->shadowAttenuation(P);
+		vec3f R = (2 * (dir.dot(N)) * N - dir).normalize();
+		vec3f spec = ks * pow(maximum(R*(-r.getDirection()), 0.0), shininess*128.0);
+		shade += atten * light * (diffuse + spec);
 	}
 
 	return shade.clamp();
