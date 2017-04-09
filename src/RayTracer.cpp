@@ -8,6 +8,9 @@
 #include "scene/ray.h"
 #include "fileio/read.h"
 #include "fileio/parse.h"
+#include "ui/TraceUI.h"
+
+extern TraceUI* traceUI;
 
 // Trace a top-level ray through normalized window coordinates (x,y)
 // through the projection plane, and out into the scene.  All we do is
@@ -26,9 +29,9 @@ vec3f RayTracer::traceRay( Scene *scene, const ray& r,
 	const vec3f& thresh, int depth )
 {
 
-	/*if (depth > traceUI->getDepth()) {
+	if (depth > traceUI->getDepth()) {
 		return vec3f(0.0, 0.0, 0.0);
-	}*/
+	}
 	
 	isect i;
 
