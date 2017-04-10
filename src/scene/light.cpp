@@ -94,7 +94,7 @@ vec3f AmbientLight::getColor(const vec3f& P) const
 vec3f AmbientLight::getDirection(const vec3f& P) const
 {
 	// no direction, illuminates surrounding
-	return vec3f(1, 1, 1);
+	return vec3f(0.0, 0.0, 0.0);
 }
 
 
