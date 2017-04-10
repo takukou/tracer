@@ -49,16 +49,53 @@ vec3f RayTracer::traceRay( Scene *scene, const ray& r,
 
 		const Material& m = i.getMaterial();
 		vec3f N = i.N;
-		vec3f rayDirection = r.getDirection();
+		vec3f rayDirection = r.getDirection().normalize();
 		vec3f intensity(0.0, 0.0, 0.0);
 		intensity += m.shade(scene, r, i);
-		// reclection = (2*NL*N)-L
-		vec3f reflectDirection = (2 * N * (N.dot((-rayDirection)))) - (-rayDirection);
-		ray reflectionRay(r.at(i.t), reflectDirection);
+		// reflection = (2*NL*N)-L
+		vec3f reflectDirection = (2 * N * -rayDirection) * N - (-rayDirection);
+		ray reflectionRay = ray(r.at(i.t), reflectDirection);
 
-		intensity += prod(m.kr, traceRay(scene, reflectionRay, thresh, depth + 1));
+		if(!m.kr.iszero())
+			intensity += prod(m.kr, traceRay(scene, reflectionRay, thresh, depth + 1));
 
-		return intensity;
+		// refraction
+		if (!m.kt.iszero()) {
+			bool TIR = false;
+			double nr = N*-rayDirection;
+
+			// refract ray
+			ray R(r.at(i.t), rayDirection);
+
+			double n_i; // incoming refraction index
+			double n_t; // outgoing refraction index
+			if (nr > RAY_EPSILON) {// entering
+				n_i = 1.000293;
+				n_t = m.index;
+			}
+			else {
+				n_i = m.index;
+				n_t = 1.000293;
+				N = -N;
+			}
+
+			double i_r = n_i / n_t;
+			double cos_i = N*-rayDirection;
+			double sin_i = sqrt(1 - cos_i*cos_i);
+			double sin_t = sin_i * i_r;
+			if (sin_t > 1.0 + RAY_EPSILON)
+				TIR = true;
+			else {
+				// eq 16.32 & 16.33
+				TIR = false;
+				double cos_t = sqrt(1 - sin_t*sin_t);
+				vec3f _T = (i_r * cos_i - cos_t)*N - i_r*-rayDirection;
+				R = ray(r.at(i.t), _T.normalize());
+				intensity += prod(m.kt, traceRay(scene, R, thresh, depth + 1));
+			}
+		}
+
+		return intensity.clamp();
 	} else {
 		// No intersection.  This ray travels to infinity, so we color
 		// it according to the background color, which in this (simple) case
